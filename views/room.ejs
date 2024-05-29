@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  <style>
+
+  </style>
+</head>
+
+<body>
+
+  <div id="videos"></div>
+  <script>
+    const ROOM_ID = "<%= roomId %>";
+
+  </script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+  <script>
+    var peers = {}
+    const peer = new Peer()
+    var myVideo = null
+    var getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+
+    getUserMedia({ video: true, audio: true }, function (stream) {
+      myVideo = stream
+      let video = document.createElement('video');
+      video.muted = true
+      addUserStream(stream, video)
+
+    })
+    const socket = io();
+    socket.on("connect", () => {
+      console.log(peer);
+
+      peer.on('open', () => {
+
+
+        socket.emit('join-room', { roomid: ROOM_ID, userid: peer._id });
+        socket.on('user-connected', (userid) => {
+
+          call = peer.call(userid, myVideo)
+          let video = document.createElement('video');
+
+          call.on("stream", (remoteStream) => {
+
+            addUserStream(remoteStream, video)
+          })
+          call.on('close', () => {
+            video.remove()
+          })
+          peers[userid]=peers
+
+        })
+        peer.on('call', (call) => {
+        
+            call.answer(myVideo)
+          let video = document.createElement('video');
+
+            call.on("stream", (remoteStream) => {
+              addUserStream(remoteStream,video)
+
+              console.log(remoteStream);
+            })
+            call.on('close', () => {
+            video.remove()
+          })
+          
+        })
+      })
+
+      console.log(socket.id); // x8WIv7-mJelg7on_ALbx
+    });
+
+
+    function addUserStream(stream, video) {
+
+      video.srcObject = stream
+      $(video).on('loadedmetadata', () => {
+        video.play()
+      })
+      console.log(video);
+      $('#videos').append(video)
+    }
+  </script>
+</body>
+
+</html>
