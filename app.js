@@ -22,6 +22,9 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
+app.get('/health',(req,res)=>{
+res.send("i am up")
+})
 app.use('/room', roomRouter);
 
 // catch 404 and forward to error handler
